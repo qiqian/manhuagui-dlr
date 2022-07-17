@@ -6,7 +6,15 @@ from get import get
 from PIL import Image
 from proxy import requests_get
 
-def downloadCh(url, config_json=None):
+def downloadCh(url, config_json=None):    
+    root = os.getcwd();
+    j = get(url)
+    if not j:
+        return False
+    bname = re.sub(r'[\\/:*?"<>|]', '_', j['bname']);
+    cname = j['cname'];
+    bdir = os.path.join(os.getcwd(), bname);
+
     def downloadPg(url, e, m, counter):
         h = {'accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
         'accept-encoding': 'gzip, deflate, br',
@@ -38,23 +46,24 @@ def downloadCh(url, config_json=None):
             #轉檔 調整為False將不會轉檔
             if True:
                 output_filename = filename + '.jpg'
-                src_filename = os.path.join('..', '..', 'jpg', cname, output_filename)
+                src_filename = os.path.join(bdir, 'jpg', cname, output_filename)
                 im = Image.open(filename)
                 im.save(src_filename, 'jpeg')
             #轉檔結束
             return
         print('超過重試次數 跳過此檔案')
-    j = get(url)
-    if not j:
-        return False
-    bname = j['bname']
-    cname = j['cname']
-    chdir(os.path.join(re.sub(r'[\\/:*?"<>|]', '_', bname), 'jpg', cname))
-    os.chdir(os.path.join('..', '..'))
+    
+    #print('0 ', bname, bdir);
+    #print('1 ', os.getcwd());
+    chdir(os.path.join(bdir, 'jpg', cname))
+    #print('2 ', os.getcwd());
+    os.chdir(bdir)
+    #print('3 ', os.getcwd());
     if config_json:
         with open('config.json', 'w') as config:
             config.write(config_json)
-    chdir(os.path.join('raw', cname))
+    chdir(os.path.join(bdir, 'raw', cname))
+    #print('4 ', os.getcwd());
     length = j['len']
     print('下載 %s %s 中 共%s頁' % (bname, cname, length))
     e = j['sl']['e']
@@ -69,12 +78,10 @@ def downloadCh(url, config_json=None):
         #每頁間隔0.5秒
         time.sleep(0.5)
         i += 1
-    os.chdir(os.path.join('..', '..', '..'))
+    os.chdir(root);
+    #print('5 ', os.getcwd());
     return True
 
 def chdir(ds):
-    dlist = ds.split(os.path.sep)
-    for d in dlist:
-        if not os.path.exists(d) and not os.path.isdir(d):
-            os.mkdir(d)
-        os.chdir(d)
+    os.makedirs(ds, exist_ok=True)
+    os.chdir(ds)
