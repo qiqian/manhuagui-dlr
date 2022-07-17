@@ -1,2 +1,6 @@
 __pycache__/*
 run.bat
+*.jpg
+*.webp
+*.zip
+config.json
